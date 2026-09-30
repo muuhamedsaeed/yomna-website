@@ -435,11 +435,11 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
           </div>
           <div class="row2">
             <div class="field" id="f_type"><label>Project Type <span class="req">*</span></label>
-              <select id="in_type"><option value="">Select a project type</option><option>Video Editing</option><option>Motion Design</option><option>Social Media Content</option><option>Campaign</option><option>Event Visuals</option><option>Other</option></select>
+              <select id="in_type"><option value="">Select a project type</option></select>
               <div class="errmsg">Please choose a project type.</div>
             </div>
             <div class="field"><label>Budget Range</label>
-              <select id="in_budget"><option value="">Select a budget range</option><option>Under $500</option><option>$500 – $1,500</option><option>$1,500 – $5,000</option><option>$5,000+</option><option>Not sure yet</option></select>
+              <select id="in_budget"><option value="">Select a budget range</option></select>
             </div>
           </div>
           <div class="field" id="f_msg"><label>Message <span class="req">*</span></label><textarea id="in_msg" placeholder="Tell me about your project, goals, or any ideas you have..."></textarea><div class="errmsg">Please enter a short message.</div></div>
@@ -470,6 +470,7 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
         <a class="admin-nav-item" data-admin="career">📈 Career Journey</a>
         <a class="admin-nav-item" data-admin="projects">🎞 Projects</a>
         <a class="admin-nav-item" data-admin="clients">🤝 Clients</a>
+        <a class="admin-nav-item" data-admin="messages">💬 Client Messages</a>
         <a class="admin-nav-item" data-admin="contact">✉️ Contact</a>
         <a class="admin-nav-item" data-admin="cv">📄 CV &amp; Showreel</a>
         <a class="admin-nav-item" data-admin="settings">⚙ Settings</a>
@@ -481,6 +482,7 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
         <div id="admin-career" class="admin-sec" style="display:none;"></div>
         <div id="admin-projects" class="admin-sec" style="display:none;"></div>
         <div id="admin-clients" class="admin-sec" style="display:none;"></div>
+        <div id="admin-messages" class="admin-sec" style="display:none;"></div>
         <div id="admin-contact" class="admin-sec" style="display:none;"></div>
         <div id="admin-cv" class="admin-sec" style="display:none;"></div>
         <div id="admin-settings" class="admin-sec" style="display:none;"></div>
@@ -572,6 +574,12 @@ const DEFAULTS = {
   brands:["ARQAM","Bubblegum","The Good News","Meraki & Beyond","Kijamii","Heinz"],
   ctaFinalHeading:"LET'S MAKE SOMETHING GREAT TOGETHER", ctaFinalSentence:"Got a project in mind? I'd love to hear about it!", ctaFinalButton:"Let's Work Together →",
   contactIntro:"I'm always excited to collaborate on new projects, creative ideas, or just talk about stories that inspire.",
+  contactFormTitle:"Send Me a Message",
+  contactFormSubtitle:"Tell me about your project and I'll get back to you soon!",
+  contactFormButton:"✈ Send Message",
+  contactFormPlaceholder:"Tell me about your project, goals, or any ideas you have...",
+  contactProjectTypeOptions:["Video Editing","Motion Design","Social Media Content","Campaign","Event Visuals","Other"],
+  contactBudgetOptions:["Under $500","$500 – $1,500","$1,500 – $5,000","$5,000+","Not sure yet"],
   contactEmail:"yomnaehabtdf@gmail.com", contactLocation:"Cairo, Egypt — open to remote work worldwide",
   linkedin:"https://linkedin.com/", behance:"https://behance.net/", instagram:"https://instagram.com/yamnona.elkamona", youtube:"https://youtube.com/",
   cvDataUrl:"", cvName:"",
@@ -646,6 +654,21 @@ function renderPublic(){
     if(k === 'mailtoEmail') el.href = 'mailto:' + state.contactEmail;
     else if(k in state) el.href = state[k];
   });
+
+  const formTitle = document.querySelector('.form-card h2');
+  const formSubtitle = document.querySelector('.form-card .sub');
+  const sendBtn = document.getElementById('sendMsgBtn');
+  const msgInput = document.getElementById('in_msg');
+  const typeSelect = document.getElementById('in_type');
+  const budgetSelect = document.getElementById('in_budget');
+  const typeOptions = Array.isArray(state.contactProjectTypeOptions) && state.contactProjectTypeOptions.length ? state.contactProjectTypeOptions : ['Video Editing','Motion Design','Social Media Content','Campaign','Event Visuals','Other'];
+  const budgetOptions = Array.isArray(state.contactBudgetOptions) && state.contactBudgetOptions.length ? state.contactBudgetOptions : ['Under $500','$500 – $1,500','$1,500 – $5,000','$5,000+','Not sure yet'];
+  if(formTitle) formTitle.textContent = state.contactFormTitle || 'Send Me a Message';
+  if(formSubtitle) formSubtitle.textContent = state.contactFormSubtitle || "Tell me about your project and I'll get back to you soon!";
+  if(sendBtn) sendBtn.textContent = state.contactFormButton || '✈ Send Message';
+  if(msgInput) msgInput.placeholder = state.contactFormPlaceholder || 'Tell me about your project, goals, or any ideas you have...';
+  if(typeSelect) typeSelect.innerHTML = '<option value="">Select a project type</option>' + typeOptions.map(v=>`<option>${esc(v)}</option>`).join('');
+  if(budgetSelect) budgetSelect.innerHTML = '<option value="">Select a budget range</option>' + budgetOptions.map(v=>`<option>${esc(v)}</option>`).join('');
 
   document.getElementById('skillsGrid').innerHTML = state.skills.map(s=>`<span>${esc(s)}</span>`).join('');
   document.getElementById('softwareIcons').innerHTML = state.software.map(s=>`<div class="soft-icon" data-name="${escAttr(s)}">${esc(s.slice(0,2).toUpperCase())}</div>`).join('');
@@ -844,7 +867,7 @@ function showAdminSection(name){
   document.querySelectorAll('.admin-sec').forEach(s=>s.style.display='none');
   document.querySelectorAll('.admin-nav-item').forEach(a=>a.classList.toggle('active', a.dataset.admin===name));
   document.getElementById('admin-'+name).style.display='block';
-  const renderers = {overview:renderAdminOverview, homepage:renderAdminHomepage, about:renderAdminAbout, career:renderAdminCareer, projects:renderAdminProjects, clients:renderAdminClients, contact:renderAdminContact, cv:renderAdminCV, settings:renderAdminSettings};
+  const renderers = {overview:renderAdminOverview, homepage:renderAdminHomepage, about:renderAdminAbout, career:renderAdminCareer, projects:renderAdminProjects, clients:renderAdminClients, messages:renderAdminMessages, contact:renderAdminContact, cv:renderAdminCV, settings:renderAdminSettings};
   renderers[name] && renderers[name]();
 }
 
@@ -985,13 +1008,28 @@ function renderAdminAbout(){
   }, el);
 }
 
+function reorderListByPosition(list, currentIndex, desiredPosition){
+  if(!Array.isArray(list) || currentIndex < 0 || currentIndex >= list.length) return list;
+  const targetIndex = Math.min(Math.max(1, Number(desiredPosition) || 1), list.length) - 1;
+  if(targetIndex === currentIndex) return list;
+  const [item] = list.splice(currentIndex, 1);
+  list.splice(targetIndex, 0, item);
+  return list;
+}
+
 function renderAdminCareer(){
   const el = document.getElementById('admin-career');
   el.innerHTML = `<h2 class="h2" style="margin-bottom:20px;">Career Journey</h2><div class="admin-card"><div id="careerRep"></div><div class="toolbar"><button class="btn small outline dark" id="addCareerBtn">+ Add position</button></div></div>${adminSaveBar()}`;
   function draw(){
     el.querySelector('#careerRep').innerHTML = state.career.map((c,i)=>`
       <div class="rep-item">
-        <button class="mv" data-up="${i}">↑</button><button class="rm" data-rm="${i}">×</button>
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
+          <div class="admin-field" style="max-width:120px;">
+            <label>Sort #</label>
+            <input type="number" min="1" max="${state.career.length}" value="${i+1}" data-order="${i}" data-list="career" style="width:100%;">
+          </div>
+          <button class="rm" data-rm="${i}">×</button>
+        </div>
         <div class="arow3">
           <div class="admin-field"><label>Dates</label><input data-f="dates" data-i="${i}" value="${escAttr(c.dates)}"></div>
           <div class="admin-field"><label>Company</label><input data-f="co" data-i="${i}" value="${escAttr(c.co)}"></div>
@@ -1000,7 +1038,12 @@ function renderAdminCareer(){
       </div>`).join('');
     el.querySelectorAll('input[data-f]').forEach(inp=>inp.addEventListener('input', e=>{ state.career[e.target.dataset.i][e.target.dataset.f]=e.target.value; }));
     el.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click', ()=>{ state.career.splice(+b.dataset.rm,1); draw(); }));
-    el.querySelectorAll('[data-up]').forEach(b=>b.addEventListener('click', ()=>{ const i=+b.dataset.up; if(i>0){ [state.career[i-1],state.career[i]]=[state.career[i],state.career[i-1]]; draw(); } }));
+    el.querySelectorAll('input[data-list="career"]').forEach(inp=>inp.addEventListener('change', e=>{
+      const currentIndex = Number(e.target.dataset.order);
+      const desiredPosition = Number(e.target.value);
+      reorderListByPosition(state.career, currentIndex, desiredPosition);
+      draw();
+    }));
   }
   draw();
   el.querySelector('#addCareerBtn').addEventListener('click', ()=>{ state.career.push({dates:'Dates',co:'Company',role:'Role'}); draw(); });
@@ -1014,7 +1057,13 @@ function renderAdminProjects(){
   function draw(){
     el.querySelector('#projRep').innerHTML = state.projects.map((p,i)=>`
       <div class="rep-item">
-        <button class="mv" data-up="${i}">↑</button><button class="rm" data-rm="${i}">×</button>
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
+          <div class="admin-field" style="max-width:120px;">
+            <label>Sort #</label>
+            <input type="number" min="1" max="${state.projects.length}" value="${i+1}" data-order="${i}" data-list="projects" style="width:100%;">
+          </div>
+          <button class="rm" data-rm="${i}">×</button>
+        </div>
         <div class="arow3">
           <div class="admin-field"><label>Title</label><input data-f="title" data-i="${i}" value="${escAttr(p.title)}"></div>
           <div class="admin-field"><label>Client</label><input data-f="client" data-i="${i}" value="${escAttr(p.client)}"></div>
@@ -1053,7 +1102,12 @@ function renderAdminProjects(){
       reader.readAsDataURL(f);
     }));
     el.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click', ()=>{ if(confirm('Delete this project?')){ state.projects.splice(+b.dataset.rm,1); draw(); } }));
-    el.querySelectorAll('[data-up]').forEach(b=>b.addEventListener('click', ()=>{ const i=+b.dataset.up; if(i>0){ [state.projects[i-1],state.projects[i]]=[state.projects[i],state.projects[i-1]]; draw(); } }));
+    el.querySelectorAll('input[data-list="projects"]').forEach(inp=>inp.addEventListener('change', e=>{
+      const currentIndex = Number(e.target.dataset.order);
+      const desiredPosition = Number(e.target.value);
+      reorderListByPosition(state.projects, currentIndex, desiredPosition);
+      draw();
+    }));
   }
   draw();
   el.querySelector('#addProjBtn').addEventListener('click', ()=>{
@@ -1069,9 +1123,45 @@ function renderAdminClients(){
   wireSaveBtn(()=>{ state.brands = val('clientsList').split('\n').map(s=>s.trim()).filter(Boolean); }, el);
 }
 
+function renderAdminMessages(){
+  const el = document.getElementById('admin-messages');
+  const all = state.inquiries || [];
+  const unreadCount = all.filter(m=>!m.read).length;
+  el.innerHTML = `
+    <h2 class="h2" style="margin-bottom:20px;">Client Messages</h2>
+    <div class="stat-grid" style="margin-bottom:20px;">
+      <div class="stat-card"><div class="num">${all.length}</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num">${unreadCount}</div><div class="lbl">Unread</div></div>
+    </div>
+    <div class="admin-card">
+      <h3>Messages ${unreadCount?`<span class="pill draft">${unreadCount} unread</span>`:''}</h3>
+      <div id="inquiryList">${all.length ? '' : '<p style="color:#888;">No messages yet.</p>'}</div>
+    </div>
+  `;
+  const listEl = el.querySelector('#inquiryList');
+  listEl.innerHTML = all.map(m=>`
+    <div class="msg-item ${m.read?'':'unread'}">
+      <div class="top"><span>${esc(m.name)} — ${esc(m.projectType)}</span><span style="font-weight:400;color:#888;">${new Date(m.date).toLocaleDateString()}</span></div>
+      <div>${esc(m.email)} ${m.budget?'· '+esc(m.budget):''}</div>
+      <div style="margin-top:6px;">${esc(m.message)}</div>
+      <div class="msg-actions">
+        <a class="btn small" href="mailto:${escAttr(m.email)}">Reply</a>
+        <button class="btn small outline dark" data-toggleread="${m.id}">${m.read?'Mark Unread':'Mark Read'}</button>
+        <button class="btn small danger" data-delmsg="${m.id}">Delete</button>
+      </div>
+    </div>`).join('');
+  listEl.querySelectorAll('[data-toggleread]').forEach(b=>b.addEventListener('click',async ()=>{
+    const m=state.inquiries.find(x=>x.id==b.dataset.toggleread);
+    try { await api('/api/admin/inquiries/'+m.id,{method:'PATCH',body:JSON.stringify({read:!m.read})}); m.read=!m.read; renderAdminMessages(); } catch(error){errorMessage(error);}
+  }));
+  listEl.querySelectorAll('[data-delmsg]').forEach(b=>b.addEventListener('click',async ()=>{
+    if(!confirm('Delete this inquiry?')) return;
+    try { await api('/api/admin/inquiries/'+b.dataset.delmsg,{method:'DELETE'}); state.inquiries=state.inquiries.filter(x=>x.id!=b.dataset.delmsg); renderAdminMessages(); } catch(error){errorMessage(error);}
+  }));
+}
+
 function renderAdminContact(){
   const el = document.getElementById('admin-contact');
-  const unreadCount = state.inquiries.filter(m=>!m.read && !m.archived).length;
   el.innerHTML = `
     <h2 class="h2" style="margin-bottom:20px;">Contact</h2>
     <div class="admin-card"><h3>Public Contact Info</h3>
@@ -1087,38 +1177,24 @@ function renderAdminContact(){
       </div>
       <div class="admin-field" style="max-width:340px;"><label>YouTube URL</label><input id="c_youtube" value="${escAttr(state.youtube)}"></div>
     </div>
-    <div class="admin-card"><h3>Inquiries ${unreadCount?`<span class="pill draft">${unreadCount} unread</span>`:''}</h3>
-      <div id="inquiryList">${state.inquiries.length? '' : '<p style="color:#888;">No inquiries yet.</p>'}</div>
+    <div class="admin-card"><h3>Message Form</h3>
+      <div class="arow2">
+        <div class="admin-field"><label>Form title</label><input id="c_formTitle" value="${escAttr(state.contactFormTitle || 'Send Me a Message')}"></div>
+        <div class="admin-field"><label>Button label</label><input id="c_formButton" value="${escAttr(state.contactFormButton || '✈ Send Message')}"></div>
+      </div>
+      <div class="admin-field"><label>Subtitle</label><input id="c_formSubtitle" value="${escAttr(state.contactFormSubtitle || "Tell me about your project and I'll get back to you soon!")}"></div>
+      <div class="admin-field"><label>Message placeholder</label><input id="c_formPlaceholder" value="${escAttr(state.contactFormPlaceholder || 'Tell me about your project, goals, or any ideas you have...')}"></div>
+      <div class="admin-field"><label>Project type options (one per line)</label><textarea id="c_formTypeOptions" rows="6">${escAttr((state.contactProjectTypeOptions || ['Video Editing','Motion Design','Social Media Content','Campaign','Event Visuals','Other']).join('\n'))}</textarea></div>
+      <div class="admin-field"><label>Budget options (one per line)</label><textarea id="c_budgetOptions" rows="6">${escAttr((state.contactBudgetOptions || ['Under $500','$500 – $1,500','$1,500 – $5,000','$5,000+','Not sure yet']).join('\n'))}</textarea></div>
     </div>
     ${adminSaveBar()}`;
-  const listEl = el.querySelector('#inquiryList');
-  listEl.innerHTML = state.inquiries.filter(m=>!m.archived).map(m=>`
-    <div class="msg-item ${m.read?'':'unread'}">
-      <div class="top"><span>${esc(m.name)} — ${esc(m.projectType)}</span><span style="font-weight:400;color:#888;">${new Date(m.date).toLocaleDateString()}</span></div>
-      <div>${esc(m.email)} ${m.budget?'· '+esc(m.budget):''}</div>
-      <div style="margin-top:6px;">${esc(m.message)}</div>
-      <div class="msg-actions">
-        <a class="btn small" href="mailto:${escAttr(m.email)}">Reply</a>
-        <button class="btn small outline dark" data-toggleread="${m.id}">${m.read?'Mark Unread':'Mark Read'}</button>
-        <button class="btn small outline dark" data-archive="${m.id}">Archive</button>
-        <button class="btn small danger" data-delmsg="${m.id}">Delete</button>
-      </div>
-    </div>`).join('');
-  listEl.querySelectorAll('[data-toggleread]').forEach(b=>b.addEventListener('click',async ()=>{
-    const m=state.inquiries.find(x=>x.id==b.dataset.toggleread);
-    try { await api('/api/admin/inquiries/'+m.id,{method:'PATCH',body:JSON.stringify({read:!m.read})}); m.read=!m.read; renderAdminContact(); } catch(error){errorMessage(error);}
-  }));
-  listEl.querySelectorAll('[data-archive]').forEach(b=>b.addEventListener('click',async ()=>{
-    const m=state.inquiries.find(x=>x.id==b.dataset.archive);
-    try { await api('/api/admin/inquiries/'+m.id,{method:'PATCH',body:JSON.stringify({archived:true})}); m.archived=true; renderAdminContact(); } catch(error){errorMessage(error);}
-  }));
-  listEl.querySelectorAll('[data-delmsg]').forEach(b=>b.addEventListener('click',async ()=>{
-    if(!confirm('Delete this inquiry?')) return;
-    try { await api('/api/admin/inquiries/'+b.dataset.delmsg,{method:'DELETE'}); state.inquiries=state.inquiries.filter(x=>x.id!=b.dataset.delmsg); renderAdminContact(); } catch(error){errorMessage(error);}
-  }));
   wireSaveBtn(()=>{
     state.contactEmail=val('c_email'); state.contactLocation=val('c_location'); state.contactIntro=val('c_intro');
     state.linkedin=val('c_linkedin'); state.behance=val('c_behance'); state.instagram=val('c_instagram'); state.youtube=val('c_youtube');
+    state.contactFormTitle=val('c_formTitle'); state.contactFormSubtitle=val('c_formSubtitle');
+    state.contactFormButton=val('c_formButton'); state.contactFormPlaceholder=val('c_formPlaceholder');
+    state.contactProjectTypeOptions = document.getElementById('c_formTypeOptions').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    state.contactBudgetOptions = document.getElementById('c_budgetOptions').value.split('\n').map(s=>s.trim()).filter(Boolean);
   }, el);
 }
 

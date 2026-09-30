@@ -80,6 +80,25 @@
   "ctaFinalSentence": "Got a project in mind? I'd love to hear about it!",
   "ctaFinalButton": "Let's Work Together →",
   "contactIntro": "I'm always excited to collaborate on new projects, creative ideas, or just talk about stories that inspire.",
+  "contactFormTitle": "Send Me a Message",
+  "contactFormSubtitle": "Tell me about your project and I'll get back to you soon!",
+  "contactFormButton": "✈ Send Message",
+  "contactFormPlaceholder": "Tell me about your project, goals, or any ideas you have...",
+  "contactProjectTypeOptions": [
+    "Video Editing",
+    "Motion Design",
+    "Social Media Content",
+    "Campaign",
+    "Event Visuals",
+    "Other"
+  ],
+  "contactBudgetOptions": [
+    "Under $500",
+    "$500 – $1,500",
+    "$1,500 – $5,000",
+    "$5,000+",
+    "Not sure yet"
+  ],
   "contactEmail": "yomnaehabtdf@gmail.com",
   "contactLocation": "Cairo, Egypt — open to remote work worldwide",
   "linkedin": "https://linkedin.com/",
