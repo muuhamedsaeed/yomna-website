@@ -75,7 +75,15 @@ function validPassword(value) {
   const digest=crypto.createHash('sha256').update(String(value || '')).digest();
   return crypto.timingSafeEqual(digest, passwordDigest);
 }
-const editable = Object.keys(defaults).filter(k=>k!=='inquiries');
+const editable = new Set([
+  ...Object.keys(defaults).filter(k=>k!=='inquiries'),
+  'contactFormTitle',
+  'contactFormSubtitle',
+  'contactFormButton',
+  'contactFormPlaceholder',
+  'contactProjectTypeOptions',
+  'contactBudgetOptions'
+]);
 
 const server=http.createServer(async(req,res)=>{
   try {
@@ -121,6 +129,12 @@ const server=http.createServer(async(req,res)=>{
       for (const key of editable) if (Object.hasOwn(input,key)) next[key]=input[key];
       if (!Array.isArray(next.projects) || !Array.isArray(next.career) || !Array.isArray(next.skills) || !Array.isArray(next.software) || !Array.isArray(next.brands)) {
         return json(res,400,{error:'Invalid content lists.'});
+      }
+      if (next.contactProjectTypeOptions && !Array.isArray(next.contactProjectTypeOptions)) {
+        return json(res,400,{error:'Project type options must be a list.'});
+      }
+      if (next.contactBudgetOptions && !Array.isArray(next.contactBudgetOptions)) {
+        return json(res,400,{error:'Budget options must be a list.'});
       }
       state=next; persist();
       return json(res,200,{ok:true});

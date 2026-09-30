@@ -416,7 +416,6 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
           <div class="crow"><div class="ico">🔗</div><div><div class="lbl">Let's Connect</div>
             <div class="social-row">
               <a data-bind-href="linkedin" target="_blank" title="LinkedIn">in</a>
-              <a data-bind-href="behance" target="_blank" title="Behance">Be</a>
               <a data-bind-href="instagram" target="_blank" title="Instagram">IG</a>
             </div>
           </div></div>
@@ -504,10 +503,8 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
         <a data-route="home">Home</a><a data-route="work">My Work</a><a data-route="contact">Contact</a>
       </div>
       <div class="footer-social">
-        <a data-bind-href="youtube" target="_blank">▶</a>
         <a data-bind-href="instagram" target="_blank">IG</a>
         <a data-bind-href="linkedin" target="_blank">in</a>
-        <a data-bind-href="behance" target="_blank">Be</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -581,7 +578,7 @@ const DEFAULTS = {
   contactProjectTypeOptions:["Video Editing","Motion Design","Social Media Content","Campaign","Event Visuals","Other"],
   contactBudgetOptions:["Under $500","$500 – $1,500","$1,500 – $5,000","$5,000+","Not sure yet"],
   contactEmail:"yomnaehabtdf@gmail.com", contactLocation:"Cairo, Egypt — open to remote work worldwide",
-  linkedin:"https://linkedin.com/", behance:"https://behance.net/", instagram:"https://instagram.com/yamnona.elkamona", youtube:"https://youtube.com/",
+  linkedin:"https://linkedin.com/", instagram:"https://instagram.com/yamnona.elkamona",
   cvDataUrl:"", cvName:"",
   projects:[
     {id:1,title:"ARQAM — Official Highlights",client:"CAF / ARQAM",mainCategory:"Video Editing",type:"Promos",desc:"Collection of videos edited during internship, published on CAF's official pages. The content gained strong reach and engagement.",role:"Video editor — cut and paced highlight reels for official distribution.",software:["Premiere Pro"],thumbColor:"#123b34",videoUrl:"",originalLink:"",views:"4.2M",featured:true,published:true},
@@ -1172,10 +1169,8 @@ function renderAdminContact(){
       <div class="admin-field"><label>Intro blurb</label><textarea id="c_intro">${escAttr(state.contactIntro)}</textarea></div>
       <div class="arow3">
         <div class="admin-field"><label>LinkedIn URL</label><input id="c_linkedin" value="${escAttr(state.linkedin)}"></div>
-        <div class="admin-field"><label>Behance URL</label><input id="c_behance" value="${escAttr(state.behance)}"></div>
         <div class="admin-field"><label>Instagram URL</label><input id="c_instagram" value="${escAttr(state.instagram)}"></div>
       </div>
-      <div class="admin-field" style="max-width:340px;"><label>YouTube URL</label><input id="c_youtube" value="${escAttr(state.youtube)}"></div>
     </div>
     <div class="admin-card"><h3>Message Form</h3>
       <div class="arow2">
@@ -1190,7 +1185,7 @@ function renderAdminContact(){
     ${adminSaveBar()}`;
   wireSaveBtn(()=>{
     state.contactEmail=val('c_email'); state.contactLocation=val('c_location'); state.contactIntro=val('c_intro');
-    state.linkedin=val('c_linkedin'); state.behance=val('c_behance'); state.instagram=val('c_instagram'); state.youtube=val('c_youtube');
+    state.linkedin=val('c_linkedin'); state.instagram=val('c_instagram');
     state.contactFormTitle=val('c_formTitle'); state.contactFormSubtitle=val('c_formSubtitle');
     state.contactFormButton=val('c_formButton'); state.contactFormPlaceholder=val('c_formPlaceholder');
     state.contactProjectTypeOptions = document.getElementById('c_formTypeOptions').value.split('\n').map(s=>s.trim()).filter(Boolean);
