@@ -1,6 +1,6 @@
 # Yomna Ehab portfolio
 
-This is website that built based on her portfolio, There are modifications that will make in the website.
+- This is the final version of the website, waiting for the testing phase.
 
 ## Run locally
 
@@ -10,6 +10,5 @@ This is website that built based on her portfolio, There are modifications that 
 
 ## What changed
 
-- Change the sorting option from button to numbers.
-- Make new section for the clients' messages.
-- Add option to change the budget and project type of the message form.
+- Make the show reel option and video preview are adjustable for any type of videos (Instagram and Facebook opens in new tab)
+- Remove the duplication sentences that are in (About - Education - Skills & Software - Career - Selected Work)
