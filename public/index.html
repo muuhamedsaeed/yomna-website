@@ -186,8 +186,8 @@ footer{background:var(--teal-deep); color:#fff; padding:34px 0;}
 .modal-overlay.open{display:flex;}
 .modal-box{background:var(--cream-card); color:var(--ink); border-radius:18px; max-width:820px; width:100%; max-height:90vh; overflow-y:auto; position:relative;}
 .modal-close{position:absolute; top:14px; right:14px; background:var(--ink); color:#fff; width:34px; height:34px; border-radius:50%; border:none; font-size:1rem; z-index:5;}
-.modal-video{background:#000; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; color:#fff;}
-.modal-video iframe,.modal-video video{width:100%; height:100%; border:none;}
+.modal-video{background:#000; width:100%; aspect-ratio:var(--video-ratio, 16 / 9); max-height:80vh; display:flex; align-items:center; justify-content:center; color:#fff; overflow:hidden; border-radius:12px 12px 0 0;}
+.modal-video iframe,.modal-video video{display:block; width:100%; height:100%; border:none; object-fit:cover;}
 .modal-body{padding:26px 28px;}
 .modal-body .cat{color:var(--teal); font-weight:700; font-size:.82rem; text-transform:uppercase; margin-bottom:6px;}
 .modal-body h2{font-size:1.5rem; margin-bottom:4px;}
@@ -305,8 +305,7 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
   </div>
 
   <div class="wrap" style="padding-top:56px;">
-    <div class="section-tag dark">About</div>
-    <h2 class="h2" style="margin-bottom:28px;" data-bind="aboutHeading">ABOUT ME</h2>
+    <h1 class="h1" style="margin-bottom:28px;" data-bind="aboutHeading">ABOUT ME</h1>
     <div class="about-grid">
       <div>
         <p data-bind="aboutP1"></p>
@@ -324,7 +323,6 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
     <div class="wrap">
       <div class="two-col">
         <div>
-          <div class="section-tag">Education</div>
           <h2 class="h2" style="margin-bottom:20px;">Education</h2>
           <div class="edu-card">
             <div class="edu-icon">🎓</div>
@@ -337,7 +335,6 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
           </div>
         </div>
         <div>
-          <div class="section-tag">Skills &amp; Software</div>
           <h2 class="h2" style="margin-bottom:20px;">Skills &amp; Software</h2>
           <div class="skills-grid" id="skillsGrid"></div>
           <div class="soft-icons" id="softwareIcons"></div>
@@ -345,7 +342,6 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
       </div>
 
       <div style="margin-top:56px;">
-        <div class="section-tag">A Journey of Growth</div>
         <h2 class="h2">My Career Journey</h2>
         <div class="timeline" id="careerTimeline"></div>
       </div>
@@ -355,7 +351,6 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
   <div class="wrap" style="padding-top:56px;">
     <div class="work-head-row">
       <div>
-        <div class="section-tag dark">Selected Work</div>
         <h2 class="h2">Selected Work</h2>
       </div>
       <a class="btn small outline dark" data-route="work">See All Projects →</a>
@@ -636,6 +631,85 @@ function toEmbed(url){
   return {type:'link', src:url};
 }
 
+window.getVideoRatio = function(url){
+  if(!url) return '16 / 9';
+  const value = String(url).trim().toLowerCase();
+  if(/youtube\.com\/(?:shorts|live)|youtu\.be\/|instagram\.com\/(?:reel|tv)|facebook\.com\/.*(?:reel|video)|fb\.watch\//i.test(value)) return '9 / 16';
+  return '16 / 9';
+};
+
+window.toEmbed = function(url){
+  if(!url) return null;
+  const raw = String(url).trim();
+  if(!raw) return null;
+  if(raw.startsWith('data:video')) return {type:'video', src:raw, ratio:'16 / 9'};
+  if(/\.(mp4|webm|ogg)(\?.*)?$/i.test(raw)) return {type:'video', src:raw, ratio:window.getVideoRatio(raw)};
+
+  const candidate = /^https?:\/\//i.test(raw) ? raw : raw.includes('.') ? 'https://' + raw : raw;
+  let parsed = null;
+  try { parsed = new URL(candidate); } catch (e) { parsed = null; }
+
+  const host = parsed ? parsed.hostname.toLowerCase().replace(/^www\./,'') : '';
+  const path = parsed ? parsed.pathname.toLowerCase() : raw.toLowerCase();
+
+  const ytMatch = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/i);
+  if(ytMatch){
+    const ratio = /shorts\//i.test(raw) || /\/shorts\//i.test(path) ? '9 / 16' : '16 / 9';
+    return {type:'iframe', src:`https://www.youtube.com/embed/${ytMatch[1]}?rel=0`, ratio};
+  }
+
+  const vimeoMatch = raw.match(/vimeo\.com\/(\d+)/i);
+  if(vimeoMatch) return {type:'iframe', src:`https://player.vimeo.com/video/${vimeoMatch[1]}`, ratio:'16 / 9'};
+
+  const driveId = parsed
+    ? (parsed.searchParams.get('id') || (path.match(/\/file\/d\/([^/]+)/i) || path.match(/\/d\/([^/]+)/i) || [])[1])
+    : (raw.match(/[?&]id=([^&]+)/i)?.[1] || raw.match(/\/(?:file\/d\/|d\/)([^/?]+)/i)?.[1]);
+  if(host.includes('drive.google.com') || host.includes('docs.google.com') || driveId){
+    if(driveId) return {type:'iframe', src:`https://drive.google.com/file/d/${driveId}/preview`, ratio:'16 / 9'};
+  }
+
+  if(host.includes('instagram.com')){
+    const instaMatch = raw.match(/instagram\.com\/(?:reel|p|tv)\/([^/?]+)/i);
+    if(instaMatch) {
+      return {type:'social', src:raw, ratio:'9 / 16'};
+    }
+  }
+
+  if(host.includes('facebook.com') || host.includes('fb.watch')){
+    return {type:'social', src:raw, ratio:'9 / 16'};
+  }
+
+  if(parsed && (parsed.protocol === 'http:' || parsed.protocol === 'https:')){
+    return {type:'iframe', src:raw, ratio:window.getVideoRatio(raw)};
+  }
+
+  return {type:'link', src:raw, ratio:'16 / 9'};
+};
+
+window.renderVideoEmbed = function(target, url, fallbackText){
+  const wrap = typeof target === 'string' ? document.getElementById(target) : target;
+  if(!wrap) return;
+  const embed = window.toEmbed(url);
+  wrap.style.setProperty('--video-ratio', (embed && embed.ratio) || '16 / 9');
+
+  if(embed && embed.type === 'iframe'){
+    wrap.innerHTML = `<iframe src="${embed.src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>`;
+  } else if(embed && embed.type === 'video'){
+    wrap.innerHTML = `<video src="${embed.src}" controls playsinline></video>`;
+  } else if(embed && embed.type === 'social'){
+    wrap.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:linear-gradient(135deg,#1d6a5e,#0c2d2a); color:#fff; text-align:center; padding:20px;">
+        <div>
+          <div style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">Open this social video</div>
+          <a class="btn small" href="${encodeURI(embed.src)}" target="_blank" rel="noopener" style="background:#f2a93c; color:#1c2b27;">Open in new tab ↗</a>
+        </div>
+      </div>
+    `;
+  } else {
+    wrap.innerHTML = `<div style="text-align:center; padding:20px;">🎬<br>${fallbackText || 'Video preview not set for this project.'}</div>`;
+  }
+};
+
 /* ---------- PUBLIC RENDER ---------- */
 function renderPortrait(){
   document.querySelectorAll('.portraitImg').forEach(img=>img.src = state.portrait || AVATAR_DEFAULT);
@@ -768,10 +842,7 @@ function openProjectModal(id, list){
   if(p.originalLink){ orig.style.display='inline-flex'; orig.href = p.originalLink; } else { orig.style.display='none'; }
 
   const vwrap = document.getElementById('modalVideoWrap');
-  const embed = toEmbed(p.videoUrl);
-  if(embed && embed.type==='iframe') vwrap.innerHTML = `<iframe src="${embed.src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-  else if(embed && embed.type==='video') vwrap.innerHTML = `<video src="${embed.src}" controls></video>`;
-  else vwrap.innerHTML = `<div style="text-align:center; padding:20px;">🎬<br>Video preview not set for this project.</div>`;
+  renderVideoEmbed(vwrap, p.videoUrl, 'Video preview not set for this project.');
 
   document.getElementById('pm_prev').onclick = ()=>{ const n=(idx-1+list.length)%list.length; openProjectModal(list[n].id, list); };
   document.getElementById('pm_next').onclick = ()=>{ const n=(idx+1)%list.length; openProjectModal(list[n].id, list); };
@@ -785,11 +856,8 @@ document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('c
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m){ m.classList.remove('open'); document.getElementById('modalVideoWrap').innerHTML=''; document.getElementById('showreelVideoWrap').innerHTML=''; } }));
 
 document.getElementById('playShowreelBtn').addEventListener('click', ()=>{
-  const embed = toEmbed(state.showreelUrl);
   const wrap = document.getElementById('showreelVideoWrap');
-  if(embed && embed.type==='iframe') wrap.innerHTML = `<iframe src="${embed.src}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
-  else if(embed && embed.type==='video') wrap.innerHTML = `<video src="${embed.src}" controls autoplay></video>`;
-  else wrap.innerHTML = `<div style="text-align:center; padding:30px;">🎬<br>Showreel coming soon.</div>`;
+  renderVideoEmbed(wrap, state.showreelUrl, 'Showreel coming soon.');
   document.getElementById('showreelModal').classList.add('open');
 });
 
@@ -934,7 +1002,7 @@ function renderAdminHomepage(){
       <div class="admin-field"><label>Intro line</label><input id="h_intro" value="${escAttr(state.heroIntro)}"></div>
       <div class="arow2">
         <div class="admin-field"><label>Primary button label</label><input id="h_ctaP" value="${escAttr(state.ctaPrimaryLabel)}"></div>
-        <div class="admin-field"><label>Showreel video URL (YouTube/Vimeo/mp4)</label><input id="h_showreel" value="${escAttr(state.showreelUrl)}" placeholder="https://youtube.com/watch?v=..."></div>
+        <div class="admin-field"><label>Showreel video URL (YouTube, Shorts, Instagram/Facebook Reels, Google Drive, Vimeo, or direct mp4)</label><input id="h_showreel" value="${escAttr(state.showreelUrl)}" placeholder="https://youtube.com/watch?v=..."></div>
       </div>
     </div>
     <div class="admin-card"><h3>About</h3>
@@ -1077,7 +1145,7 @@ function renderAdminProjects(){
           <div class="admin-field"><label>Software used (comma sep.)</label><input data-f="software" data-i="${i}" value="${escAttr((p.software||[]).join(', '))}"></div>
         </div>
         <div class="arow2">
-          <div class="admin-field"><label>Video URL (YouTube/Vimeo/mp4)</label><input data-f="videoUrl" data-i="${i}" value="${escAttr(p.videoUrl)}"></div>
+          <div class="admin-field"><label>Video URL (YouTube, Shorts, Instagram/Facebook Reels, Google Drive, Vimeo, or direct mp4)</label><input data-f="videoUrl" data-i="${i}" value="${escAttr(p.videoUrl)}"></div>
           <div class="admin-field"><label>Original link (opens in new tab)</label><input data-f="originalLink" data-i="${i}" value="${escAttr(p.originalLink)}"></div>
         </div>
         <div class="admin-field"><label>Thumbnail image (optional upload)</label><input type="file" accept="image/*" class="file-input thumb-upload" data-i="${i}"></div>
@@ -1203,7 +1271,7 @@ function renderAdminCV(){
       <p class="small-note">The Download CV button on the Contact page always uses the latest uploaded file.</p>
     </div>
     <div class="admin-card"><h3>Showreel</h3>
-      <div class="admin-field"><label>Showreel video URL (YouTube, Vimeo or direct .mp4)</label><input id="showreelUrl2" value="${escAttr(state.showreelUrl)}"></div>
+      <div class="admin-field"><label>Showreel video URL (YouTube, Shorts, Instagram/Facebook Reels, Google Drive, Vimeo, or direct .mp4)</label><input id="showreelUrl2" value="${escAttr(state.showreelUrl)}"></div>
       <p class="small-note">Used by the "Play Showreel" button on the Home page.</p>
     </div>
     ${adminSaveBar()}`;
