@@ -1,44 +1,30 @@
 # Supabase database
 
-This folder contains a Supabase-ready schema and a seed generated from the current
-`data/site.json` content.
+The SQL files create and seed the portfolio tables. `03_static_site_policies.sql`
+adds the access rules and Storage bucket needed when the website is hosted as a
+static site and connects directly to Supabase from the browser.
 
-## Setup
+## Supabase setup
 
-1. Create a Supabase project.
-2. Open **SQL Editor** and run `01_schema.sql`, then `02_seed.sql`.
-3. Create a public Storage bucket named `portfolio-assets`.
-4. Upload `storage/portrait.png` to that bucket. Copy its public URL, then update
-   the `portrait` row in `site_config` with that URL.
+1. In the Supabase SQL Editor, run `01_schema.sql`, then `02_seed.sql`.
+2. Create the administrator under **Authentication → Users** and note the
+   account email.
+3. Replace `REPLACE_WITH_ADMIN_EMAIL` in `03_static_site_policies.sql` with that
+   exact email, then run the file.
+4. In project settings, copy the Project URL and the **publishable** API key.
+   Never put a secret/service-role key in browser code or Vercel environment
+   variables for this static site.
 
-The source JSON has a portrait but no CV file. The portrait is stored as an image
-asset in Supabase Storage rather than as base64 text in a database row.
+The third SQL file creates the public `portfolio-assets` bucket used for the
+portrait, CV, and uploaded project thumbnails. Row Level Security permits
+public visitors to read public portfolio content and submit inquiries. Only the
+configured authenticated admin can change content or read/manage inquiries.
 
-## Tables and imported data
+## Local static preview
 
-The schema creates nine tables: `site_config`, `skills`, `software`, `brands`,
-`career`, `projects`, `contact_project_types`, `contact_budget_options`, and
-`inquiries`. The seed contains the site's text settings, 14 skills, 8 software
-tools, 6 brands, 5 career entries, 24 projects, both contact option lists, and
-the one inquiry already present in `data/site.json`.
+Copy the root `.env.example` to `.env`, then set `SUPABASE_URL`,
+`SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_ADMIN_EMAIL`. From the project root run
+`npm install` and `npm start`, then open `http://localhost:4173`.
 
-The source currently has five career entries (not six). The inquiry seed retains
-the contact details and message from the local site data. Inquiry rows have no
-public read, update, or delete policy. The site uses a server-only Supabase
-secret key to manage the admin inbox; never put that key in browser code.
-
-The seed is intended for initial import. Its upserts refresh portfolio content
-from `data/site.json` if run again.
-
-## Connect and run the website locally
-
-1. In Supabase, copy the **Project URL** and create or copy a server-side
-   **Secret API key** from the project's API keys settings. Do not use the
-   database password as the website API key.
-2. In the project root, copy `.env.example` to `.env` and fill in
-   `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, and a unique `ADMIN_PASSWORD`.
-3. Run `npm start` from the project root and open `http://localhost:3000`.
-
-The server checks the Supabase connection before starting. The browser continues
-to call the website's existing `/api/...` routes; the Node server reads and
-writes the Supabase tables. It no longer uses `data/site.json` as its live store.
+The build generates `dist/` and writes browser-visible configuration there.
+The site does not need a Node server at runtime. Do not commit `.env` or `dist/`.

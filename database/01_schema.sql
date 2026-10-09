@@ -141,5 +141,5 @@ grant select on public.site_config, public.skills, public.software, public.brand
 grant insert (name, email, project_type, budget, message)
   on public.inquiries to anon, authenticated;
 
--- Do not grant public access to inquiries. Use the Supabase service role only
--- from a trusted server or Edge Function for the admin inbox.
+-- Public visitors may only insert inquiries. The static-site admin policies
+-- and authenticated grants are added by 03_static_site_policies.sql.
