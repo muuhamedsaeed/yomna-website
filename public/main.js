@@ -561,7 +561,7 @@ function renderAdminOverview(){
           <button class="qa-btn" data-admin="projects">+ Add New Project →</button>
           <button class="qa-btn" data-admin="homepage">Update Homepage →</button>
           <button class="qa-btn" data-admin="about">Edit About &amp; Skills →</button>
-          <button class="qa-btn" data-admin="Client Messages">Read Messages →</button>
+          <button class="qa-btn" data-admin="Inquiries">Read Messages →</button>
         </div>
         <div class="admin-card">
           <h3>Website Preview</h3>
