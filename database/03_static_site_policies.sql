@@ -10,7 +10,7 @@ language sql
 stable
 set search_path = ''
 as $$
-  select lower(coalesce(auth.jwt() ->> 'email', '')) = lower('REPLACE_WITH_ADMIN_EMAIL');
+  select lower(coalesce(auth.jwt() ->> 'email', '')) = lower('muhamedsaeed46@gmail.com');
 $$;
 
 grant execute on function public.is_portfolio_admin() to anon, authenticated;
