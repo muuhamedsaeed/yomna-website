@@ -512,9 +512,11 @@ document.getElementById('unlockBtn').addEventListener('click', async ()=>{
 document.querySelectorAll('.admin-nav-item').forEach(a=>a.addEventListener('click', ()=>showAdminSection(a.dataset.admin)));
 
 function showAdminSection(name){
+  const section = document.getElementById('admin-'+name);
+  if(!section) return;
   document.querySelectorAll('.admin-sec').forEach(s=>s.style.display='none');
   document.querySelectorAll('.admin-nav-item').forEach(a=>a.classList.toggle('active', a.dataset.admin===name));
-  document.getElementById('admin-'+name).style.display='block';
+  section.style.display='block';
   const renderers = {overview:renderAdminOverview, homepage:renderAdminHomepage, about:renderAdminAbout, career:renderAdminCareer, projects:renderAdminProjects, clients:renderAdminClients, messages:renderAdminMessages, contact:renderAdminContact, cv:renderAdminCV, settings:renderAdminSettings};
   renderers[name] && renderers[name]();
 }
@@ -561,7 +563,7 @@ function renderAdminOverview(){
           <button class="qa-btn" data-admin="projects">+ Add New Project →</button>
           <button class="qa-btn" data-admin="homepage">Update Homepage →</button>
           <button class="qa-btn" data-admin="about">Edit About &amp; Skills →</button>
-          <button class="qa-btn" data-admin="Inquiries">Read Messages →</button>
+          <button class="qa-btn" data-admin="messages">Read Messages →</button>
         </div>
         <div class="admin-card">
           <h3>Website Preview</h3>
