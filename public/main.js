@@ -244,11 +244,13 @@ window.toEmbed = function(url){
   const vimeoMatch = raw.match(/vimeo\.com\/(\d+)/i);
   if(vimeoMatch) return {type:'iframe', src:`https://player.vimeo.com/video/${vimeoMatch[1]}`, ratio:'16 / 9'};
 
+  const drivePathMatch = (pathname.match(/\/file\/d\/([^/]+)/i) || pathname.match(/\/d\/([^/]+)/i) || [])[1];
   const driveId = parsed
-    ? (parsed.searchParams.get('id') || (pathname.match(/\/file\/d\/([^/]+)/i) || pathname.match(/\/d\/([^/]+)/i) || [])[1])
-    : (raw.match(/[?&]id=([^&]+)/i)?.[1] || raw.match(/\/(?:file\/d\/|d\/)([^/?]+)/i)?.[1]);
-  if(host.includes('drive.google.com') || host.includes('docs.google.com') || driveId){
-    if(driveId) return {type:'iframe', src:`https://drive.google.com/file/d/${driveId}/preview`, ratio:'16 / 9'};
+    ? (parsed.searchParams.get('id') || parsed.searchParams.get('fileId') || drivePathMatch)
+    : (raw.match(/[?&](?:id|fileId)=([^&]+)/i)?.[1] || raw.match(/\/(?:file\/d\/|d\/)([^/?]+)/i)?.[1]);
+  const driveHost = host.includes('drive.google.com') || host.includes('docs.google.com') || host.includes('googleusercontent.com');
+  if(driveHost && driveId){
+    return {type:'iframe', src:`https://drive.google.com/file/d/${driveId}/preview`, ratio:'16 / 9'};
   }
 
   if(host.includes('instagram.com')){
