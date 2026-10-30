@@ -248,18 +248,27 @@ window.toEmbed = function(url){
     ? (parsed.searchParams.get('id') || (pathname.match(/\/file\/d\/([^/]+)/i) || pathname.match(/\/d\/([^/]+)/i) || [])[1])
     : (raw.match(/[?&]id=([^&]+)/i)?.[1] || raw.match(/\/(?:file\/d\/|d\/)([^/?]+)/i)?.[1]);
   if(host.includes('drive.google.com') || host.includes('docs.google.com') || driveId){
-    if(driveId) return {type:'iframe', src:`https://drive.google.com/file/d/${driveId}/preview`, ratio:'16 / 9'};
+    if(driveId) {
+      const previewUrl = new URL(`https://drive.google.com/file/d/${driveId}/preview`);
+      const resourceKey = parsed?.searchParams.get('resourcekey');
+      if(resourceKey) previewUrl.searchParams.set('resourcekey', resourceKey);
+      return {type:'iframe', src:previewUrl.toString(), ratio:'16 / 9', externalUrl:raw, externalLabel:'Open in Google Drive ↗'};
+    }
+  }
+
+  if(host === 'tiktok.com' || host.endsWith('.tiktok.com')){
+    return {type:'social', src:raw, ratio:'9 / 16', heading:'Open this TikTok video', label:'Open on TikTok ↗'};
   }
 
   if(host.includes('instagram.com')){
     const instaMatch = raw.match(/instagram\.com\/(?:reel|p|tv)\/([^/?]+)/i);
     if(instaMatch) {
-      return {type:'social', src:raw, ratio:'9 / 16'};
+      return {type:'social', src:raw, ratio:'9 / 16', heading:'Open this Instagram video', label:'Open on Instagram ↗'};
     }
   }
 
   if(host.includes('facebook.com') || host.includes('fb.watch')){
-    return {type:'social', src:raw, ratio:'9 / 16'};
+    return {type:'social', src:raw, ratio:'9 / 16', heading:'Open this Facebook video', label:'Open on Facebook ↗'};
   }
 
   if(parsed && (parsed.protocol === 'http:' || parsed.protocol === 'https:')){
@@ -274,17 +283,21 @@ window.renderVideoEmbed = function(target, url, fallbackText){
   if(!wrap) return;
   const embed = window.toEmbed(url);
   wrap.style.setProperty('--video-ratio', (embed && embed.ratio) || '16 / 9');
+  wrap.style.position = 'relative';
 
   if(embed && embed.type === 'iframe'){
-    wrap.innerHTML = `<iframe src="${embed.src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>`;
+    const externalLink = embed.externalUrl
+      ? `<a class="btn small" href="${encodeURI(embed.externalUrl)}" target="_blank" rel="noopener" style="position:absolute; right:14px; bottom:14px; z-index:2; background:#f2a93c; color:#1c2b27;">${embed.externalLabel || 'Open video ↗'}</a>`
+      : '';
+    wrap.innerHTML = `<iframe src="${embed.src}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>${externalLink}`;
   } else if(embed && embed.type === 'video'){
     wrap.innerHTML = `<video src="${embed.src}" controls playsinline></video>`;
   } else if(embed && embed.type === 'social'){
     wrap.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:center; width:100%; height:100%; background:linear-gradient(135deg,#1d6a5e,#0c2d2a); color:#fff; text-align:center; padding:20px;">
         <div>
-          <div style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">Open this social video</div>
-          <a class="btn small" href="${encodeURI(embed.src)}" target="_blank" rel="noopener" style="background:#f2a93c; color:#1c2b27;">Open in new tab ↗</a>
+          <div style="font-size:1.1rem; font-weight:700; margin-bottom:10px;">${embed.heading || 'Open this social video'}</div>
+          <a class="btn small" href="${encodeURI(embed.src)}" target="_blank" rel="noopener" style="background:#f2a93c; color:#1c2b27;">${embed.label || 'Open in new tab ↗'}</a>
         </div>
       </div>
     `;
