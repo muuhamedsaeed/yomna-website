@@ -232,7 +232,8 @@ window.toEmbed = function(url){
   try { parsed = new URL(candidate); } catch (e) { parsed = null; }
 
   const host = parsed ? parsed.hostname.toLowerCase().replace(/^www\./,'') : '';
-  const path = parsed ? parsed.pathname.toLowerCase() : raw.toLowerCase();
+  const pathname = parsed ? parsed.pathname : raw;
+  const path = pathname.toLowerCase();
 
   const ytMatch = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/i);
   if(ytMatch){
@@ -244,7 +245,7 @@ window.toEmbed = function(url){
   if(vimeoMatch) return {type:'iframe', src:`https://player.vimeo.com/video/${vimeoMatch[1]}`, ratio:'16 / 9'};
 
   const driveId = parsed
-    ? (parsed.searchParams.get('id') || (path.match(/\/file\/d\/([^/]+)/i) || path.match(/\/d\/([^/]+)/i) || [])[1])
+    ? (parsed.searchParams.get('id') || (pathname.match(/\/file\/d\/([^/]+)/i) || pathname.match(/\/d\/([^/]+)/i) || [])[1])
     : (raw.match(/[?&]id=([^&]+)/i)?.[1] || raw.match(/\/(?:file\/d\/|d\/)([^/?]+)/i)?.[1]);
   if(host.includes('drive.google.com') || host.includes('docs.google.com') || driveId){
     if(driveId) return {type:'iframe', src:`https://drive.google.com/file/d/${driveId}/preview`, ratio:'16 / 9'};
