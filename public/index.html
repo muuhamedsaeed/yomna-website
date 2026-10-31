@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <style>
 :root{
   --teal:#1d6a5e; --teal-deep:#134f45; --orange:#f2a93c; --orange-deep:#d8901f;
@@ -196,6 +197,13 @@ footer{background:var(--teal-deep); color:#fff; padding:34px 0;}
 .modal-tags{display:flex; gap:8px; flex-wrap:wrap;}
 .modal-tags span{background:#eee; padding:4px 10px; border-radius:8px; font-size:.8rem;}
 .modal-nav{display:flex; justify-content:space-between; margin-top:22px; gap:10px; flex-wrap:wrap;}
+
+.crop-modal .modal-box{max-width:760px;}
+.crop-stage{background:#f3efe7; border:1px solid #e8dfd1; border-radius:14px; padding:18px;}
+.crop-viewport{position:relative; width:100%; max-width:100%; aspect-ratio:1 / 1; background:#e8e0d5; border-radius:12px; overflow:hidden; margin:0 auto;}
+.crop-viewport img{display:block; max-width:none; width:100%; height:100%;}
+.crop-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px; flex-wrap:wrap;}
+.crop-hint{font-size:.8rem; color:#666; margin-top:10px;}
 
 /* Admin */
 .admin-shell{display:flex; min-height:100vh;}
@@ -485,6 +493,25 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
   </div>
 </section>
 
+<div id="thumbCropModal" class="modal-overlay" aria-hidden="true">
+  <div class="modal-box crop-modal">
+    <button class="modal-close" type="button" data-close-thumb-crop aria-label="Close image cropper">×</button>
+    <div class="modal-body">
+      <div class="cat">Project thumbnail</div>
+      <h2 style="margin-bottom:8px;">Crop your image</h2>
+      <p class="small-note" style="margin-bottom:14px;">Adjust the frame and crop the image to a square before saving it as the project thumbnail.</p>
+      <div class="crop-stage">
+        <div class="crop-viewport"><img id="thumbCropImage" alt="Project thumbnail preview"></div>
+      </div>
+      <div class="crop-hint">Drag to reposition the image, and use the zoom controls to fine-tune the crop.</div>
+      <div class="crop-actions">
+        <button type="button" class="btn small outline dark" data-close-thumb-crop>Cancel</button>
+        <button type="button" class="btn small" id="thumbCropApplyBtn">Crop &amp; Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <footer id="publicFooter">
@@ -540,6 +567,7 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="/vendor/supabase.js"></script>
 <script src="/supabase-config.js"></script>
 <script src="/main.js"></script>

@@ -377,6 +377,76 @@ function bindCardClicks(container, list){
   });
 }
 
+let activeThumbCropIndex = null;
+let activeThumbCropper = null;
+
+function closeThumbCropModal(){
+  const modal = document.getElementById('thumbCropModal');
+  if(!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  const img = document.getElementById('thumbCropImage');
+  if(img) img.src = '';
+  if(activeThumbCropper){ activeThumbCropper.destroy(); activeThumbCropper = null; }
+  activeThumbCropIndex = null;
+}
+
+function openThumbCropModal(file, projectIndex){
+  if(!file || !file.type || !file.type.startsWith('image/')) return;
+  const modal = document.getElementById('thumbCropModal');
+  const img = document.getElementById('thumbCropImage');
+  if(!modal || !img) return;
+
+  if(typeof Cropper === 'undefined'){
+    const reader = new FileReader();
+    reader.onload = ()=>{ state.projects[projectIndex].thumbImage = reader.result; };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    img.src = reader.result;
+    activeThumbCropIndex = projectIndex;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    setTimeout(()=>{
+      if(activeThumbCropper){ activeThumbCropper.destroy(); }
+      activeThumbCropper = new Cropper(img, {
+        aspectRatio: 1,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 1,
+        movable: true,
+        zoomable: true,
+        scalable: true,
+        rotatable: false,
+        background: false,
+        responsive: true,
+        cropBoxMovable: false,
+        cropBoxResizable: false,
+        toggleDragModeOnDblclick: false
+      });
+    }, 50);
+  };
+  reader.readAsDataURL(file);
+}
+
+document.addEventListener('click', e=>{
+  if(e.target && e.target.closest('[data-close-thumb-crop]')) closeThumbCropModal();
+  if(e.target && e.target.id === 'thumbCropModal') closeThumbCropModal();
+});
+document.getElementById('thumbCropApplyBtn').addEventListener('click', ()=>{
+  if(activeThumbCropIndex === null || !activeThumbCropper) return;
+  const canvas = activeThumbCropper.getCroppedCanvas({
+    width: 900,
+    height: 900,
+    imageSmoothingQuality: 'high'
+  });
+  state.projects[activeThumbCropIndex].thumbImage = canvas.toDataURL('image/jpeg', 0.92);
+  closeThumbCropModal();
+});
+
 /* ---- My Work filters ---- */
 let workFilter = {cat:'All', type:'All', q:''};
 function renderTypeChips(){
@@ -754,10 +824,10 @@ function renderAdminProjects(){
       else p[f] = e.target.value;
     }));
     el.querySelectorAll('.thumb-upload').forEach(inp=>inp.addEventListener('change', e=>{
-      const f = e.target.files[0]; if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{ state.projects[e.target.dataset.i].thumbImage = reader.result; };
-      reader.readAsDataURL(f);
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      openThumbCropModal(file, Number(e.target.dataset.i));
+      e.target.value = '';
     }));
     el.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click', ()=>{ if(confirm('Delete this project?')){ state.projects.splice(+b.dataset.rm,1); draw(); } }));
     el.querySelectorAll('input[data-list="projects"]').forEach(inp=>inp.addEventListener('change', e=>{
