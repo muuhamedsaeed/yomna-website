@@ -17,7 +17,7 @@ const AVATAR_DEFAULT = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAAGkCA
 
 const DEFAULTS = {
   portrait: AVATAR_DEFAULT,
-  heroName:"YOMNA EHAB", heroTitle:"VIDEO EDITOR + MOTION DESIGNER",
+  heroName:"Yomna Ehab", heroTitle:"VIDEO EDITOR + MOTION DESIGNER",
   heroIntro:"Turning ideas into stories people feel.",
   ctaPrimaryLabel:"View My Work →", showreelUrl:"",
   aboutHeading:"ABOUT ME",

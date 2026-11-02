@@ -3,7 +3,7 @@
 -- then replace the empty `portrait` value below with its public URL.
 
 insert into public.site_config (key, value) values
-  ('heroName', 'YOMNA EHAB'),
+  ('heroName', 'Yomna Ehab'),
   ('heroTitle', 'VIDEO EDITOR + MOTION DESIGNER'),
   ('heroIntro', 'Turning ideas into stories people feel.'),
   ('ctaPrimaryLabel', 'View My Work →'),
