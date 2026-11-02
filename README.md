@@ -43,3 +43,7 @@ are public browser settings, so only the publishable key belongs there. Keep
 If the Supabase tables already contain the seeded website data, this deploy
 will use that data. After changing Vercel environment variables, redeploy so
 the build can regenerate the public configuration.
+
+## Client logos (Trusted By tape)
+
+Run `database/04_client_logos.sql` once in the Supabase SQL Editor. Then upload logos from **Admin → Clients** (PNG, SVG or WebP, max 2 MB each) and press Publish Changes.

@@ -106,10 +106,11 @@ h2.h2{font-size:clamp(1.8rem,4vw,2.6rem); font-weight:800;}
 
 /* Selected Work / Work grid cards */
 .work-head-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px;}
-.work-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:20px;}
+.work-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:18px;}
+@media(max-width:520px){ .work-grid{grid-template-columns:repeat(2,1fr); gap:12px;} }
 .pcard{border-radius:14px; overflow:hidden; background:var(--cream-card); color:var(--ink); box-shadow:0 6px 16px rgba(0,0,0,.1); transition:transform .15s ease; cursor:pointer;}
 .pcard:hover{transform:translateY(-4px);}
-.pthumb{position:relative; height:150px; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+.pthumb{position:relative; aspect-ratio:9 / 16; display:flex; align-items:center; justify-content:center; overflow:hidden;}
 .pthumb img{width:100%; height:100%; object-fit:cover; position:absolute; inset:0;}
 .pthumb .word{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.5rem; color:#fff; text-transform:uppercase; text-shadow:0 2px 6px rgba(0,0,0,.3); z-index:1; text-align:center; padding:0 10px;}
 .pthumb .views{position:absolute; top:8px; right:8px; background:rgba(0,0,0,.5); color:#fff; font-size:.72rem; padding:3px 8px; border-radius:10px; z-index:2;}
@@ -124,7 +125,12 @@ h2.h2{font-size:clamp(1.8rem,4vw,2.6rem); font-weight:800;}
 .pbody .meta{font-size:.8rem; color:#555;}
 
 /* Brands */
-.brand-strip{display:flex; flex-wrap:wrap; gap:34px; justify-content:center; align-items:center; opacity:.85; font-weight:700; font-size:1.05rem;}
+.brand-strip{overflow:hidden; margin-top:22px; -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent); mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);}
+.logo-track{display:flex; width:max-content; animation:logo-scroll var(--tape-duration,30s) linear infinite;}
+.logo-group{display:flex; align-items:center; flex:none;}
+.logo-item{height:56px; width:auto; max-width:180px; object-fit:contain; margin-right:56px; flex:none; user-select:none;}
+@keyframes logo-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@media(max-width:520px){ .logo-item{height:40px; margin-right:36px;} }
 
 /* Final CTA */
 .final-cta{text-align:center;}
@@ -200,7 +206,7 @@ footer{background:var(--teal-deep); color:#fff; padding:34px 0;}
 
 .crop-modal .modal-box{max-width:760px;}
 .crop-stage{background:#f3efe7; border:1px solid #e8dfd1; border-radius:14px; padding:18px;}
-.crop-viewport{position:relative; width:100%; max-width:100%; aspect-ratio:1 / 1; background:#e8e0d5; border-radius:12px; overflow:hidden; margin:0 auto;}
+.crop-viewport{position:relative; width:100%; max-width:340px; aspect-ratio:9 / 16; background:#e8e0d5; border-radius:12px; overflow:hidden; margin:0 auto;}
 .crop-viewport img{display:block; max-width:none; width:100%; height:100%;}
 .crop-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:18px; flex-wrap:wrap;}
 .crop-hint{font-size:.8rem; color:#666; margin-top:10px;}
@@ -366,7 +372,7 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
     <div class="work-grid" id="selectedWorkGrid"></div>
   </div>
 
-  <div class="wrap" style="padding:50px 24px;">
+  <div class="wrap" id="trustedSection" style="padding:50px 24px;">
     <div class="section-tag dark" style="text-align:center;">Trusted By</div>
     <div class="brand-strip" id="brandStrip"></div>
   </div>
@@ -499,7 +505,7 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
     <div class="modal-body">
       <div class="cat">Project thumbnail</div>
       <h2 style="margin-bottom:8px;">Crop your image</h2>
-      <p class="small-note" style="margin-bottom:14px;">Adjust the frame and crop the image to a square before saving it as the project thumbnail.</p>
+      <p class="small-note" style="margin-bottom:14px;">Adjust the frame and crop the image to a 9:16 vertical frame (Instagram Reels / YouTube Shorts size) before saving it as the project thumbnail.</p>
       <div class="crop-stage">
         <div class="crop-viewport"><img id="thumbCropImage" alt="Project thumbnail preview"></div>
       </div>

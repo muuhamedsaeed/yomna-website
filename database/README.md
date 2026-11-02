@@ -28,3 +28,7 @@ Copy the root `.env.example` to `.env`, then set `SUPABASE_URL`,
 
 The build generates `dist/` and writes browser-visible configuration there.
 The site does not need a Node server at runtime. Do not commit `.env` or `dist/`.
+
+## Client logos (Trusted By tape)
+
+Run `database/04_client_logos.sql` once in the Supabase SQL Editor. Then upload logos from **Admin → Clients** (PNG, SVG or WebP, max 2 MB each) and press Publish Changes.
