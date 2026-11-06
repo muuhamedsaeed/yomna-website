@@ -126,11 +126,12 @@ h2.h2{font-size:clamp(1.8rem,4vw,2.6rem); font-weight:800;}
 
 /* Brands */
 .brand-strip{overflow:hidden; margin-top:22px; -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent); mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent);}
-.logo-track{display:flex; width:max-content; animation:logo-scroll var(--tape-duration,30s) linear infinite;}
+.logo-track{display:flex; width:max-content; min-height:56px; will-change:transform; animation:logo-scroll var(--tape-duration,30s) linear infinite; animation-play-state:paused;}
+.logo-track.is-ready{animation-play-state:running;}
 .logo-group{display:flex; align-items:center; flex:none;}
-.logo-item{height:56px; width:auto; max-width:180px; object-fit:contain; margin-right:56px; flex:none; user-select:none;}
-@keyframes logo-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-@media(max-width:520px){ .logo-item{height:40px; margin-right:36px;} }
+.logo-item{display:block; height:56px; width:auto; max-width:180px; object-fit:contain; margin-right:56px; flex:none; user-select:none;}
+@keyframes logo-scroll{from{transform:translateX(0);}to{transform:translateX(calc(-1 * var(--tape-distance, 0px)));}}
+@media(max-width:520px){ .logo-track{min-height:40px;} .logo-item{height:40px; margin-right:36px;} }
 
 /* Final CTA */
 .final-cta{text-align:center;}
@@ -446,8 +447,8 @@ table.admtable td{padding:8px; border-bottom:1px solid #f0f0f0; vertical-align:m
               <select id="in_type"><option value="">Select a project type</option></select>
               <div class="errmsg">Please choose a project type.</div>
             </div>
-            <div class="field"><label>Budget Range</label>
-              <select id="in_budget"><option value="">Select a budget range</option></select>
+            <div class="field"><label>Budget</label>
+              <input type="text" id="in_budget" maxlength="100" placeholder="e.g. $1,000 or 20,000 EGP">
             </div>
           </div>
           <div class="field" id="f_msg"><label>Message <span class="req">*</span></label><textarea id="in_msg" placeholder="Tell me about your project, goals, or any ideas you have..."></textarea><div class="errmsg">Please enter a short message.</div></div>

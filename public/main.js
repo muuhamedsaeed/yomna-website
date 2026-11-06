@@ -37,6 +37,7 @@ const DEFAULTS = {
   ],
   brands:[],
   clientLogos:[],
+  projectTypes:["Social Media","Campaigns","Reels","Promos","Event Visuals","Other"],
   ctaFinalHeading:"LET'S MAKE SOMETHING GREAT TOGETHER", ctaFinalSentence:"Got a project in mind? I'd love to hear about it!", ctaFinalButton:"Let's Work Together →",
   contactIntro:"I'm always excited to collaborate on new projects, creative ideas, or just talk about stories that inspire.",
   contactFormTitle:"Send Me a Message",
@@ -44,7 +45,6 @@ const DEFAULTS = {
   contactFormButton:"✈ Send Message",
   contactFormPlaceholder:"Tell me about your project, goals, or any ideas you have...",
   contactProjectTypeOptions:["Video Editing","Motion Design","Social Media Content","Campaign","Event Visuals","Other"],
-  contactBudgetOptions:["Under $500","$500 – $1,500","$1,500 – $5,000","$5,000+","Not sure yet"],
   contactEmail:"yomnaehabtdf@gmail.com", contactLocation:"Cairo, Egypt — open to remote work worldwide",
   linkedin:"https://linkedin.com/", instagram:"https://instagram.com/yamnona.elkamona",
   cvDataUrl:"", cvName:"",
@@ -88,19 +88,22 @@ async function loadSite(){
     supabaseClient.from('brands').select('name').order('sort_order'),
     supabaseClient.from('career').select('dates,company,role').order('sort_order'),
     supabaseClient.from('projects').select('*').order('sort_order'),
-    supabaseClient.from('contact_project_types').select('label').order('sort_order'),
-    supabaseClient.from('contact_budget_options').select('label').order('sort_order')
+    supabaseClient.from('contact_project_types').select('label').order('sort_order')
   ]);
   results.forEach(checkDb);
   // Client logos live in their own table; if it has not been created yet the site still loads.
   const logoResult = await supabaseClient.from('client_logos').select('name,logo_url').order('sort_order');
-  const [config, skills, software, brands, career, projects, projectTypes, budgets] = results.map(r=>r.data || []);
+  // Project types follow the same graceful fallback until their migration is installed.
+  const projectTypeResult = await supabaseClient.from('project_types').select('label').order('sort_order');
+  const [config, skills, software, brands, career, projects, contactProjectTypes] = results.map(r=>r.data || []);
   const site = structuredClone(DEFAULTS);
   config.forEach(({key,value})=>{ if(!(key==='portrait' && !value)) site[key]=value; });
   site.skills=skills.map(x=>x.name);
   site.software=software.map(x=>x.name);
   site.brands=brands.map(x=>x.name);
   site.clientLogos=logoResult.error?[]:(logoResult.data||[]).map(x=>({name:x.name||'',logo:x.logo_url||''}));
+  const savedProjectTypes=projectTypeResult.error?[]:(projectTypeResult.data||[]).map(x=>x.label).filter(Boolean);
+  site.projectTypes=savedProjectTypes.length?savedProjectTypes:[...DEFAULTS.projectTypes];
   site.career=career.map(x=>({dates:x.dates,co:x.company,role:x.role}));
   site.projects=projects.map(x=>({
     id:x.id,title:x.title,client:x.client,mainCategory:x.main_category,type:x.type,
@@ -108,8 +111,7 @@ async function loadSite(){
     thumbImage:x.thumb_image || '',videoUrl:x.video_url,originalLink:x.original_link,
     views:x.views,featured:x.featured,published:x.published
   }));
-  site.contactProjectTypeOptions=projectTypes.map(x=>x.label);
-  site.contactBudgetOptions=budgets.map(x=>x.label);
+  site.contactProjectTypeOptions=contactProjectTypes.map(x=>x.label);
   site.inquiries=[];
   return site;
 }
@@ -167,6 +169,7 @@ async function saveSite(content){
   if(Object.hasOwn(content,'software')) tasks.push(saveRows('software',content.software.map((name,i)=>({name,sort_order:i+1}))));
   if(clientLogos) tasks.push(saveRows('client_logos',clientLogos.map((l,i)=>({name:l.name,logo_url:l.logo,sort_order:i+1}))));
   if(Object.hasOwn(content,'brands')) tasks.push(saveRows('brands',content.brands.map((name,i)=>({name,sort_order:i+1}))));
+  if(Object.hasOwn(content,'projectTypes')) tasks.push(saveRows('project_types',content.projectTypes.map((label,i)=>({label,sort_order:i+1}))));
   if(Object.hasOwn(content,'career')) tasks.push(saveRows('career',content.career.map((x,i)=>({dates:x.dates,company:x.co,role:x.role,sort_order:i+1}))));
   if(Object.hasOwn(content,'projects')) tasks.push(saveRows('projects',projects.map(p=>({
     id:p.id,title:p.title,client:p.client||'',main_category:p.mainCategory,type:p.type||'',
@@ -175,8 +178,7 @@ async function saveSite(content){
     featured:Boolean(p.featured),published:Boolean(p.published),sort_order:p.sort_order
   }))));
   if(Object.hasOwn(content,'contactProjectTypeOptions')) tasks.push(saveRows('contact_project_types',content.contactProjectTypeOptions.map((label,i)=>({label,sort_order:i+1}))));
-  if(Object.hasOwn(content,'contactBudgetOptions')) tasks.push(saveRows('contact_budget_options',content.contactBudgetOptions.map((label,i)=>({label,sort_order:i+1}))));
-  const arrays=new Set(['skills','software','brands','clientLogos','career','projects','contactProjectTypeOptions','contactBudgetOptions','inquiries']);
+  const arrays=new Set(['skills','software','brands','clientLogos','projectTypes','career','projects','contactProjectTypeOptions','inquiries']);
   const config=Object.entries(content).filter(([key,value])=>!arrays.has(key)&&['string','number','boolean'].includes(typeof value)).map(([key,value])=>({key,value:String(value)}));
   if(config.length) tasks.push(supabaseClient.from('site_config').upsert(config,{onConflict:'key'}).then(result=>checkDb(result)));
   await Promise.all(tasks);
@@ -343,15 +345,12 @@ function renderPublic(){
   const sendBtn = document.getElementById('sendMsgBtn');
   const msgInput = document.getElementById('in_msg');
   const typeSelect = document.getElementById('in_type');
-  const budgetSelect = document.getElementById('in_budget');
   const typeOptions = Array.isArray(state.contactProjectTypeOptions) && state.contactProjectTypeOptions.length ? state.contactProjectTypeOptions : ['Video Editing','Motion Design','Social Media Content','Campaign','Event Visuals','Other'];
-  const budgetOptions = Array.isArray(state.contactBudgetOptions) && state.contactBudgetOptions.length ? state.contactBudgetOptions : ['Under $500','$500 – $1,500','$1,500 – $5,000','$5,000+','Not sure yet'];
   if(formTitle) formTitle.textContent = state.contactFormTitle || 'Send Me a Message';
   if(formSubtitle) formSubtitle.textContent = state.contactFormSubtitle || "Tell me about your project and I'll get back to you soon!";
   if(sendBtn) sendBtn.textContent = state.contactFormButton || '✈ Send Message';
   if(msgInput) msgInput.placeholder = state.contactFormPlaceholder || 'Tell me about your project, goals, or any ideas you have...';
   if(typeSelect) typeSelect.innerHTML = '<option value="">Select a project type</option>' + typeOptions.map(v=>`<option>${esc(v)}</option>`).join('');
-  if(budgetSelect) budgetSelect.innerHTML = '<option value="">Select a budget range</option>' + budgetOptions.map(v=>`<option>${esc(v)}</option>`).join('');
 
   document.getElementById('skillsGrid').innerHTML = state.skills.map(s=>`<span>${esc(s)}</span>`).join('');
   document.getElementById('softwareIcons').innerHTML = state.software.map(s=>`<div class="soft-icon" data-name="${escAttr(s)}">${esc(s.slice(0,2).toUpperCase())}</div>`).join('');
@@ -370,21 +369,116 @@ function renderPublic(){
   document.getElementById('selectedWorkGrid').innerHTML = featured.map(p=>projectCardHtml(p)).join('') || '<p style="opacity:.7;">No featured projects yet.</p>';
 
   bindCardClicks(document.getElementById('selectedWorkGrid'), featured);
+  renderTypeChips();
   renderWorkGrid();
 }
 
+let logoTapeState = null;
+let logoTapeResizeFrame = 0;
+
+window.addEventListener('resize', ()=>{
+  cancelAnimationFrame(logoTapeResizeFrame);
+  logoTapeResizeFrame = requestAnimationFrame(()=>{
+    if(logoTapeState) resizeLogoTape(logoTapeState);
+  });
+});
+
 function renderLogoTape(){
+  const TAPE_SPEED_PX_PER_SEC = 130;
   const section = document.getElementById('trustedSection');
   const strip = document.getElementById('brandStrip');
   const logos = (state.clientLogos||[]).filter(l=>l.logo);
   if(!section || !strip) return;
   section.style.display = logos.length ? '' : 'none';
-  if(!logos.length){ strip.innerHTML=''; return; }
-  const repeat = Math.max(1, Math.ceil(8/logos.length));
-  const group = Array.from({length:repeat}, ()=>logos).flat()
-    .map(l=>`<img class="logo-item" src="${escAttr(l.logo)}" alt="${escAttr(l.name||'Client logo')}" loading="lazy" draggable="false">`).join('');
-  strip.style.setProperty('--tape-duration', Math.max(20, logos.length*repeat*3)+'s');
-  strip.innerHTML = `<div class="logo-track"><div class="logo-group">${group}</div><div class="logo-group" aria-hidden="true">${group}</div></div>`;
+  if(!logos.length){
+    strip.innerHTML='';
+    logoTapeState=null;
+    return;
+  }
+
+  const signature = JSON.stringify(logos.map(l=>[l.name||'',l.logo]));
+  if(logoTapeState && logoTapeState.signature===signature && logoTapeState.strip===strip) return;
+
+  const tape = {
+    signature,
+    logos,
+    section,
+    strip,
+    repeat:1,
+    speed:TAPE_SPEED_PX_PER_SEC,
+    version:(logoTapeState?.version||0)+1
+  };
+  logoTapeState=tape;
+  buildLogoTape(tape);
+}
+
+function logoGroupHtml(logos, repeat){
+  const markup = Array.from({length:repeat}, ()=>logos).flat()
+    .map(l=>`<img class="logo-item" src="${escAttr(l.logo)}" alt="${escAttr(l.name||'Client logo')}" draggable="false">`).join('');
+  return `<div class="logo-group">${markup}</div><div class="logo-group" aria-hidden="true">${markup}</div>`;
+}
+
+async function buildLogoTape(tape){
+  const version=tape.version;
+  tape.strip.style.setProperty('--tape-distance','0px');
+  tape.strip.style.setProperty('--tape-duration','0s');
+  tape.strip.innerHTML=`<div class="logo-track">${logoGroupHtml(tape.logos,tape.repeat)}</div>`;
+
+  const track=tape.strip.querySelector('.logo-track');
+  const images=[...track.querySelectorAll('.logo-item')];
+  await Promise.all(images.map(waitForLogoImage));
+  if(logoTapeState!==tape || tape.version!==version) return;
+
+  const group=track.querySelector('.logo-group');
+  const baseWidth=group.getBoundingClientRect().width/tape.repeat;
+  if(!baseWidth) return;
+  const viewportWidth=tape.strip.clientWidth||window.innerWidth;
+  const nextRepeat=Math.max(1,Math.ceil(viewportWidth/baseWidth));
+  if(nextRepeat!==tape.repeat){
+    tape.repeat=nextRepeat;
+    tape.version+=1;
+    buildLogoTape(tape);
+    return;
+  }
+
+  applyLogoTapeMetrics(tape,track,group);
+}
+
+function waitForLogoImage(image){
+  const decoded=()=>typeof image.decode==='function' ? image.decode().catch(()=>{}) : Promise.resolve();
+  if(image.complete) return decoded();
+  return new Promise(resolve=>{
+    const done=()=>decoded().then(resolve);
+    image.addEventListener('load',done,{once:true});
+    image.addEventListener('error',done,{once:true});
+  });
+}
+
+function applyLogoTapeMetrics(tape,track,group){
+  const groupWidth=group.getBoundingClientRect().width;
+  if(!groupWidth) return;
+  tape.strip.style.setProperty('--tape-distance',`${groupWidth}px`);
+  tape.strip.style.setProperty('--tape-duration',`${groupWidth/tape.speed}s`);
+  track.classList.add('is-ready');
+}
+
+function resizeLogoTape(tape){
+  const track=tape.strip.querySelector('.logo-track');
+  const group=track?.querySelector('.logo-group');
+  if(!track || !group) return;
+
+  const baseWidth=group.getBoundingClientRect().width/tape.repeat;
+  if(!baseWidth) return;
+  const viewportWidth=tape.strip.clientWidth||window.innerWidth;
+  const nextRepeat=Math.max(1,Math.ceil(viewportWidth/baseWidth));
+  if(nextRepeat!==tape.repeat){
+    tape.repeat=nextRepeat;
+    tape.version+=1;
+    buildLogoTape(tape);
+    return;
+  }
+
+  applyLogoTapeMetrics(tape,track,group);
 }
 
 function projectCardHtml(p){
@@ -486,8 +580,10 @@ document.getElementById('thumbCropApplyBtn').addEventListener('click', ()=>{
 /* ---- My Work filters ---- */
 let workFilter = {cat:'All', type:'All', q:''};
 function renderTypeChips(){
-  const types = ['All','Social Media','Campaigns','Reels','Promos','Event Visuals','Other'];
-  document.getElementById('typeChips').innerHTML = types.map(t=>`<button class="chip ${workFilter.type===t?'active':''}" data-type="${t}">${t}</button>`).join('');
+  const projectTypes=Array.isArray(state.projectTypes) && state.projectTypes.length ? state.projectTypes : DEFAULTS.projectTypes;
+  const types=['All',...projectTypes];
+  if(!types.includes(workFilter.type)) workFilter.type='All';
+  document.getElementById('typeChips').innerHTML = types.map(t=>`<button class="chip ${workFilter.type===t?'active':''}" data-type="${escAttr(t)}">${esc(t)}</button>`).join('');
   document.querySelectorAll('#typeChips .chip').forEach(b=>b.addEventListener('click', ()=>{ workFilter.type=b.dataset.type; renderWorkGrid(); renderTypeChips(); }));
 }
 document.querySelectorAll('.cat-btn').forEach(b=>b.addEventListener('click', ()=>{
@@ -568,7 +664,7 @@ document.getElementById('inquiryForm').addEventListener('submit', async e=>{
   const name=document.getElementById('in_name').value.trim();
   const email=document.getElementById('in_email').value.trim();
   const type=document.getElementById('in_type').value;
-  const budget=document.getElementById('in_budget').value;
+  const budget=document.getElementById('in_budget').value.trim();
   const msg=document.getElementById('in_msg').value.trim();
   let ok=true;
   const setErr=(id,bad)=>{ document.getElementById(id).classList.toggle('error',bad); if(bad) ok=false; };
@@ -816,10 +912,33 @@ function renderAdminCareer(){
 
 function renderAdminProjects(){
   const el = document.getElementById('admin-projects');
-  el.innerHTML = `<h2 class="h2" style="margin-bottom:20px;">Projects</h2><div class="admin-card"><div id="projRep"></div><div class="toolbar"><button class="btn small outline dark" id="addProjBtn">+ Add project</button></div></div>${adminSaveBar()}`;
-  const types = ['Social Media','Campaigns','Reels','Promos','Event Visuals','Other'];
+  if(!Array.isArray(state.projectTypes) || !state.projectTypes.length) state.projectTypes=[...DEFAULTS.projectTypes];
+  el.innerHTML = `<h2 class="h2" style="margin-bottom:20px;">Projects</h2>
+    <div class="admin-card">
+      <h3>Project Types</h3>
+      <p class="small-note" style="margin-bottom:12px;">These types control the filters on the Work page.</p>
+      <div id="projectTypeRep"></div>
+      <div class="toolbar">
+        <input id="newProjectType" placeholder="New project type" style="flex:1; min-width:180px; padding:9px 12px; border-radius:8px; border:1.5px solid #ddd; font-family:inherit;">
+        <button class="btn small outline dark" type="button" id="addProjectTypeBtn">+ Add type</button>
+      </div>
+    </div>
+    <div class="admin-card"><div id="projRep"></div><div class="toolbar"><button class="btn small outline dark" id="addProjBtn">+ Add project</button></div></div>${adminSaveBar()}`;
+
+  const normalizedType=value=>String(value||'').trim().toLocaleLowerCase();
+  const currentTypes=()=>state.projectTypes;
+  const isDuplicateType=(name,exceptIndex=-1)=>currentTypes().some((type,index)=>index!==exceptIndex&&normalizedType(type)===normalizedType(name));
+  const projectTypeOptions=currentType=>{
+    const types=[...currentTypes()];
+    const value=String(currentType||'');
+    if(!types.includes(value)) types.unshift(value);
+    return types;
+  };
+
   function draw(){
-    el.querySelector('#projRep').innerHTML = state.projects.map((p,i)=>`
+    el.querySelector('#projRep').innerHTML = state.projects.map((p,i)=>{
+      const types=projectTypeOptions(p.type);
+      return `
       <div class="rep-item">
         <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px;">
           <div class="admin-field" style="max-width:120px;">
@@ -835,7 +954,7 @@ function renderAdminProjects(){
         </div>
         <div class="arow3">
           <div class="admin-field"><label>Main Category</label><select data-f="mainCategory" data-i="${i}"><option ${p.mainCategory==='Video Editing'?'selected':''}>Video Editing</option><option ${p.mainCategory==='Motion Design'?'selected':''}>Motion Design</option></select></div>
-          <div class="admin-field"><label>Project Type</label><select data-f="type" data-i="${i}">${types.map(t=>`<option ${p.type===t?'selected':''}>${t}</option>`).join('')}</select></div>
+          <div class="admin-field"><label>Project Type</label><select data-f="type" data-i="${i}">${types.map(t=>`<option value="${escAttr(t)}" ${(p.type||'')===t?'selected':''}>${esc(t)||'Unassigned'}</option>`).join('')}</select></div>
           <div class="admin-field"><label>Card color</label><input type="color" data-f="thumbColor" data-i="${i}" value="${p.thumbColor||'#1d6a5e'}"></div>
         </div>
         <div class="admin-field"><label>Description</label><textarea data-f="desc" data-i="${i}">${escAttr(p.desc)}</textarea></div>
@@ -852,13 +971,18 @@ function renderAdminProjects(){
           <label class="checkline"><input type="checkbox" data-f="featured" data-i="${i}" ${p.featured?'checked':''}> Featured on Home</label>
           <label class="checkline"><input type="checkbox" data-f="published" data-i="${i}" ${p.published?'checked':''}> Published</label>
         </div>
-      </div>`).join('');
-    el.querySelectorAll('[data-f]').forEach(inp=>inp.addEventListener('input', e=>{
+      </div>`;
+    }).join('');
+    const updateProjectField=e=>{
       const p = state.projects[e.target.dataset.i]; const f = e.target.dataset.f;
       if(f==='featured' || f==='published') p[f] = e.target.checked;
       else if(f==='software') p.software = e.target.value.split(',').map(s=>s.trim()).filter(Boolean);
       else p[f] = e.target.value;
-    }));
+    };
+    el.querySelectorAll('[data-f]').forEach(inp=>inp.addEventListener(
+      inp.matches('select,input[type="checkbox"]')?'change':'input',
+      updateProjectField
+    ));
     el.querySelectorAll('.thumb-upload').forEach(inp=>inp.addEventListener('change', e=>{
       const file = e.target.files && e.target.files[0];
       if(!file) return;
@@ -873,9 +997,63 @@ function renderAdminProjects(){
       draw();
     }));
   }
+
+  function drawProjectTypes(){
+    const list=el.querySelector('#projectTypeRep');
+    list.innerHTML=currentTypes().map((type,index)=>`
+      <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid #eee;">
+        <input data-project-type="${index}" value="${escAttr(type)}" aria-label="Project type ${index+1}" style="flex:1; min-width:0; padding:9px 12px; border-radius:8px; border:1.5px solid #ddd; font-family:inherit;">
+        <button class="btn small outline dark" type="button" data-delete-project-type="${index}" aria-label="Delete ${escAttr(type)}">×</button>
+      </div>`).join('');
+    list.querySelectorAll('[data-project-type]').forEach(input=>input.addEventListener('change', ()=>{
+      const index=Number(input.dataset.projectType);
+      const oldName=currentTypes()[index];
+      const newName=input.value.trim();
+      if(!newName){ alert('Project type names cannot be empty.'); drawProjectTypes(); return; }
+      if(isDuplicateType(newName,index)){ alert('Project type names must be unique.'); drawProjectTypes(); return; }
+      if(newName===oldName) return;
+      currentTypes()[index]=newName;
+      state.projects.forEach(project=>{ if(project.type===oldName) project.type=newName; });
+      refreshProjectTypes();
+    }));
+    list.querySelectorAll('[data-delete-project-type]').forEach(button=>button.addEventListener('click', ()=>{
+      const index=Number(button.dataset.deleteProjectType);
+      const oldName=currentTypes()[index];
+      const remaining=currentTypes().filter((_,typeIndex)=>typeIndex!==index);
+      if(!remaining.length){ alert('Keep at least one project type.'); return; }
+      const used=state.projects.some(project=>project.type===oldName);
+      if(used&&!confirm(`Delete "${oldName}"? Projects using it will be reassigned.`)) return;
+      state.projectTypes=remaining;
+      if(used){
+        const replacement=remaining.includes('Other')?'Other':remaining[0];
+        state.projects.forEach(project=>{ if(project.type===oldName) project.type=replacement; });
+      }
+      refreshProjectTypes();
+    }));
+  }
+
+  function refreshProjectTypes(){
+    drawProjectTypes();
+    draw();
+    renderTypeChips();
+    renderWorkGrid();
+  }
+
   draw();
+  drawProjectTypes();
+  el.querySelector('#addProjectTypeBtn').addEventListener('click', ()=>{
+    const input=el.querySelector('#newProjectType');
+    const name=input.value.trim();
+    if(!name){ alert('Project type names cannot be empty.'); return; }
+    if(isDuplicateType(name)){ alert('Project type names must be unique.'); return; }
+    state.projectTypes.push(name);
+    refreshProjectTypes();
+  });
+  el.querySelector('#newProjectType').addEventListener('keydown', event=>{
+    if(event.key==='Enter'){ event.preventDefault(); el.querySelector('#addProjectTypeBtn').click(); }
+  });
   el.querySelector('#addProjBtn').addEventListener('click', ()=>{
-    state.projects.push({id:Math.max(0,...state.projects.map(p=>Number(p.id)||0))+1, title:'New Project', client:'Client', mainCategory:'Video Editing', type:'Social Media', desc:'', role:'', software:[], thumbColor:'#1d6a5e', videoUrl:'', originalLink:'', views:'', featured:false, published:false});
+    state.projects.push({id:Math.max(0,...state.projects.map(p=>Number(p.id)||0))+1, title:'New Project', client:'Client', mainCategory:'Video Editing', type:currentTypes()[0], desc:'', role:'', software:[], thumbColor:'#1d6a5e', videoUrl:'', originalLink:'', views:'', featured:false, published:false});
     draw();
   });
   wireSaveBtn(()=>{}, el);
@@ -979,7 +1157,6 @@ function renderAdminContact(){
       <div class="admin-field"><label>Subtitle</label><input id="c_formSubtitle" value="${escAttr(state.contactFormSubtitle || "Tell me about your project and I'll get back to you soon!")}"></div>
       <div class="admin-field"><label>Message placeholder</label><input id="c_formPlaceholder" value="${escAttr(state.contactFormPlaceholder || 'Tell me about your project, goals, or any ideas you have...')}"></div>
       <div class="admin-field"><label>Project type options (one per line)</label><textarea id="c_formTypeOptions" rows="6">${escAttr((state.contactProjectTypeOptions || ['Video Editing','Motion Design','Social Media Content','Campaign','Event Visuals','Other']).join('\n'))}</textarea></div>
-      <div class="admin-field"><label>Budget options (one per line)</label><textarea id="c_budgetOptions" rows="6">${escAttr((state.contactBudgetOptions || ['Under $500','$500 – $1,500','$1,500 – $5,000','$5,000+','Not sure yet']).join('\n'))}</textarea></div>
     </div>
     ${adminSaveBar()}`;
   wireSaveBtn(()=>{
@@ -988,7 +1165,6 @@ function renderAdminContact(){
     state.contactFormTitle=val('c_formTitle'); state.contactFormSubtitle=val('c_formSubtitle');
     state.contactFormButton=val('c_formButton'); state.contactFormPlaceholder=val('c_formPlaceholder');
     state.contactProjectTypeOptions = document.getElementById('c_formTypeOptions').value.split('\n').map(s=>s.trim()).filter(Boolean);
-    state.contactBudgetOptions = document.getElementById('c_budgetOptions').value.split('\n').map(s=>s.trim()).filter(Boolean);
   }, el);
 }
 

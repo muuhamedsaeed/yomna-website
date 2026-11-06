@@ -47,3 +47,7 @@ the build can regenerate the public configuration.
 ## Client logos (Trusted By tape)
 
 Run `database/04_client_logos.sql` once in the Supabase SQL Editor. Then upload logos from **Admin → Clients** (PNG, SVG or WebP, max 2 MB each) and press Publish Changes.
+
+## Project Types (Work filters)
+
+Run `database/05_project_types.sql` once in the Supabase SQL Editor. Then manage the Work-page filter types from **Admin → Projects**.
